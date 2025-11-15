@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Perfil — Seu Treino</title>
+<style>
+:root{
+  --primary:#ffce45;
+  --primary-600:#e0b000;
+  --bg:#f5f5f5;
+  --card:#fff;
+  --text:#111;
+  --muted:#6b7280;
+  --glass: rgba(255,255,255,0.6);
+  --shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter, system-ui, Arial;background:linear-gradient(180deg,#f7f8fb,var(--bg));color:var(--text);-webkit-font-smoothing:antialiased}
+.header{
+  background:var(--primary);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08)
+}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:44px;height:44;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.title{font-size:18px;font-weight:800}
+.small{font-size:13px;color:var(--muted)}
+.container{padding:16px;padding-bottom:120px}
+.panel{background:var(--card);padding:14px;border-radius:12px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,0.03)}
+.avatar{width:96px;height:96px;border-radius:999px;background:#fff;display:flex;align-items:center;justify-content:center;color:#052036;font-weight:900;font-size:28px}
+.input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);margin-top:8px}
+.btn{padding:10px;border-radius:10px;background:var(--primary);color:#000;border:none;font-weight:800;cursor:pointer}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stat{background:#fff;padding:10px;border-radius:10px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;height:76px;background:#fff;border-top:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:space-around;padding:8px 20px;box-shadow:0 -6px 20px rgba(0,0,0,0.06)}
+.nav-button{display:flex;flex-direction:column;align-items:center;border:none;background:transparent;cursor:pointer;gap:6px}
+.nav-button span{font-size:12px;color:var(--muted)}
+#loadingScreen{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;z-index:1300}
+
+/* dark mode */
+body.dark{background:#0b1220;color:#e6eef6}
+body.dark .panel{background:#071428;border:1px solid rgba(255,255,255,0.04)}
+</style>
+</head>
+<body>
+<div id="loadingScreen">Carregando perfil...</div>
+
+<header class="header">
+  <div class="brand">
+    <div class="logo">TR</div>
+    <div>
+      <div class="title">Seu Treino</div>
+      <div class="small">Calistenia + Halteres</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="kpi">
+      <div class="pill" id="pointsPill">Pts 0</div>
+    </div>
+    <button class="btn" id="themeToggle" style="padding:6px 10px;margin-left:8px">🌓</button>
+  </div>
+</header>
+
+<main class="container">
+  <div class="panel" style="display:flex;gap:12px;align-items:center">
+    <div>
+      <div id="avatar" class="avatar">TR</div>
+      <input id="file" type="file" accept="image/*" style="margin-top:8px">
+    </div>
+
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:800" id="displayName">Seu Nome</div>
+          <div class="small" id="className">Classe: Iniciante</div>
+        </div>
+        <button id="resetBtn" class="btn">Resetar Progresso</button>
+      </div>
+
+      <div style="margin-top:10px">
+        <input id="nameInput" class="input" placeholder="Digite seu nome">
+        <button id="saveProfile" class="btn" style="margin-top:8px">Salvar Perfil</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="font-weight:800">Estatísticas</div>
+    <div class="stat-grid" style="margin-top:10px">
+      <div class="stat"><div class="small">Treinos</div><div style="font-weight:800" id="statTreinos">0</div></div>
+      <div class="stat"><div class="small">Min Bike</div><div style="font-weight:800" id="statBike">0</div></div>
+      <div class="stat"><div class="small">Level</div><div style="font-weight:800" id="statLevel">1</div></div>
+    </div>
+  </div>
+</main>
+
+<nav class="bottom-nav" aria-label="Navegação inferior">
+  <button class="nav-button" id="navHome"><div class="ic">🏠</div><span>Home</span></button>
+  <button class="nav-button" id="navProgress"><div class="ic">📈</div><span>Progresso</span></button>
+  <button class="nav-button" id="navProfile"><div class="ic">👤</div><span>Perfil</span></button>
+</nav>
+
+<script>
+/* helpers */
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+/* storage */
+const PROF = 'profile_v1';
+const STORAGE = { HISTORY: 'history_v2', POINTS: 'points_v2', GAMER: 'gamer_v1' };
+
+/* loading */
+window.addEventListener('load', ()=>{ setTimeout(()=>{ $('#loadingScreen').style.display='none'; }, 300); });
+
+/* theme */
+function setTheme(t){
+  if(t==='dark') document.body.classList.add('dark'); else document.body.classList.remove('dark');
+  localStorage.setItem('theme_v2', t);
+}
+const savedTheme = localStorage.getItem('theme_v2') || 'light';
+setTheme(savedTheme);
+$('#themeToggle').addEventListener('click', ()=> {
+  const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+  setTheme(next);
+});
+
+/* nav */
+$('#navHome').addEventListener('click', ()=> location.href='index.html');
+$('#navProgress').addEventListener('click', ()=> location.href='progresso.html');
+$('#navProfile').addEventListener('click', ()=> location.href='perfil.html');
+
+/* profile functions */
+function load(){ return JSON.parse(localStorage.getItem(PROF) || '{}'); }
+function save(p){ localStorage.setItem(PROF, JSON.stringify(p)); }
+
+function render(){
+  const p = load();
+  $('#displayName').innerText = p.name || 'Seu Nome';
+  $('#nameInput').value = p.name || '';
+  $('#className').innerText = 'Classe: ' + (p.className || 'Iniciante');
+  $('#statTreinos').innerText = p.treinos || 0;
+  $('#statBike').innerText = (p.bike||0) + 'm';
+  $('#statLevel').innerText = p.level || 1;
+  if(p.avatarData){
+    const a = $('#avatar'); a.style.backgroundImage = `url(${p.avatarData})`; a.style.backgroundSize='cover'; a.innerText='';
+  }
+  $('#pointsPill').innerText = 'Pts ' + (Number(localStorage.getItem(STORAGE.POINTS) || 0));
+}
+render();
+
+$('#saveProfile').addEventListener('click', ()=>{
+  const p = load();
+  p.name = $('#nameInput').value || 'Seu Nome';
+  save(p); render(); alert('Perfil salvo');
+});
+
+/* avatar upload */
+$('#file').addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{ const p = load(); p.avatarData = reader.result; save(p); render(); };
+  reader.readAsDataURL(f);
+});
+
+/* reset */
+$('#resetBtn').addEventListener('click', ()=>{
+  if(!confirm('Resetar todo o progresso local?')) return;
+  localStorage.removeItem('history_v2'); localStorage.removeItem('points_v2'); localStorage.removeItem('treinosConcluidos_v2'); localStorage.removeItem('exercise_done_v3'); localStorage.removeItem('bike_v2');
+  const p = load(); p.treinos = 0; p.bike = 0; p.level = 1; save(p);
+  // also reset gamer state
+  localStorage.removeItem(STORAGE.GAMER);
+  render(); alert('Progresso resetado');
+});
+
+/* sync some stats from home/gamer */
+(function sync(){
+  const history = JSON.parse(localStorage.getItem(STORAGE.HISTORY) || '[]');
+  const p = load();
+  p.treinos = history.length;
+  p.bike = Number(localStorage.getItem('bike_minutes')||0);
+  const g = JSON.parse(localStorage.getItem(STORAGE.GAMER)||'{}');
+  p.level = g.level || p.level || 1;
+  save(p); render();
+})();
+
+</script>
+</body>
+</html>
