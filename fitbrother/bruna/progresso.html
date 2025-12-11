@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Progresso — Seu Treino</title>
+<style>
+:root{
+  --primary:#ffce45;
+  --primary-600:#e0b000;
+  --bg:#f5f5f5;
+  --card:#fff;
+  --text:#111;
+  --muted:#6b7280;
+  --glass: rgba(255,255,255,0.6);
+  --glass-dark: rgba(0,0,0,0.04);
+  --success:#34d399;
+  --shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter, system-ui, Arial;background:linear-gradient(180deg,#f7f8fb,var(--bg));color:var(--text);-webkit-font-smoothing:antialiased}
+.header{
+  background:var(--primary);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08)
+}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:44px;height:44;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.title{font-size:18px;font-weight:800}
+.small{font-size:13px;color:var(--muted)}
+.container{padding:16px;padding-bottom:120px}
+.panel{background:var(--card);padding:14px;border-radius:12px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,0.03)}
+.level-row{display:flex;align-items:center;gap:12px}
+.level-circle{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-600));display:flex;align-items:center;justify-content:center;font-weight:900;color:#052036;font-size:22px}
+.xp-bar{height:12px;background:#f0f0f0;border-radius:8px;overflow:hidden;margin-top:12px}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-600));width:0%;transition:width .6s}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.badge{width:80px;height:80px;border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stat{background:#fff;padding:10px;border-radius:10px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
+.button{padding:10px;border-radius:10px;background:var(--primary);color:#000;font-weight:800;border:none;cursor:pointer;margin-top:10px}
+.kpi{display:flex;gap:10px;align-items:center}
+.kpi .pill{background:#fff;padding:8px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.04);font-weight:700}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;height:76px;background:#fff;border-top:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:space-around;padding:8px 20px;box-shadow:0 -6px 20px rgba(0,0,0,0.06)}
+.nav-button{display:flex;flex-direction:column;align-items:center;border:none;background:transparent;cursor:pointer;gap:6px}
+.nav-button span{font-size:12px;color:var(--muted)}
+#loadingScreen{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;z-index:1300}
+
+/* dark mode (toggle uses same class as index) */
+body.dark{background:#0b1220;color:#e6eef6}
+body.dark .panel{background:#071428;border:1px solid rgba(255,255,255,0.04)}
+body.dark .badge{background:rgba(255,255,255,0.02)}
+body.dark .stat{background:rgba(255,255,255,0.02)}
+body.dark .level-circle{color:#071428}
+@media(min-width:720px){ .stat-grid{grid-template-columns:repeat(3,1fr)} }
+</style>
+</head>
+<body>
+<div id="loadingScreen">Carregando progresso...</div>
+
+<header class="header">
+  <div class="brand">
+    <div class="logo">TR</div>
+    <div>
+      <div class="title">Seu Treino</div>
+      <div class="small">Calistenia + Halteres</div>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <div class="pill" id="pointsPill">Pts 0</div>
+    <button class="button" id="claimWeekTop" style="padding:6px 10px;margin-left:8px">Reivindicar +40 XP</button>
+    <button class="button" id="themeToggle" style="padding:6px 10px;margin-left:8px">🌓</button>
+  </div>
+</header>
+
+<main class="container">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="level-row">
+        <div class="level-circle" id="levelCircle">1</div>
+        <div>
+          <div style="font-weight:800" id="levelTitle">Iniciante</div>
+          <div class="small" id="xpText">XP 0 / 100</div>
+          <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="small">Streak</div>
+        <div style="font-weight:800" id="streakVal">0</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="small">Badges</div>
+      <div class="badges" id="badgesWrap"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:800">Estatísticas</div>
+        <div class="small">Visão geral do seu desempenho</div>
+      </div>
+      <div>
+        <button class="button" id="claimWeek">Reivindicar bônus semanal</button>
+      </div>
+    </div>
+
+    <div class="stat-grid" style="margin-top:12px">
+      <div class="stat"><div class="small">Treinos</div><div style="font-weight:800" id="statTreinos">0</div></div>
+      <div class="stat"><div class="small">Min Bike</div><div style="font-weight:800" id="statBike">0</div></div>
+      <div class="stat"><div class="small">Melhor Streak</div><div style="font-weight:800" id="statBest">0</div></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:10px">
+    <button class="button" id="toProfile">Perfil</button>
+  </div>
+</main>
+
+<nav class="bottom-nav" aria-label="Navegação inferior">
+  <button class="nav-button" id="navHome"><div class="ic">🏠</div><span>Home</span></button>
+  <button class="nav-button" id="navProgress"><div class="ic">📈</div><span>Progresso</span></button>
+  <button class="nav-button" id="navProfile"><div class="ic">👤</div><span>Perfil</span></button>
+</nav>
+
+<script>
+/* helpers (same as index) */
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+/* storage keys (align with home/train) */
+const STORAGE = {
+  HISTORY: 'history_v2',
+  POINTS: 'points_v2',
+  GAMER: 'gamer_v1'
+};
+
+function nowYMD(d=new Date()){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* loading screen */
+window.addEventListener('load', ()=>{ setTimeout(()=>{ $('#loadingScreen').style.display='none'; }, 400); });
+
+/* theme handling (same behaviour as index) */
+function setTheme(t){
+  if(t==='dark') document.body.classList.add('dark'); else document.body.classList.remove('dark');
+  localStorage.setItem('theme_v2', t);
+}
+const savedTheme = localStorage.getItem('theme_v2') || 'light';
+setTheme(savedTheme);
+$('#themeToggle').addEventListener('click', ()=> {
+  const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+  setTheme(next);
+});
+
+/* nav buttons */
+$('#navHome').addEventListener('click', ()=> location.href='index.html');
+$('#navProgress').addEventListener('click', ()=> location.href='progresso.html');
+$('#navProfile').addEventListener('click', ()=> location.href='perfil.html');
+
+/* points pill */
+function loadPoints(){ return Number(localStorage.getItem(STORAGE.POINTS) || 0); }
+function savePoints(p){ localStorage.setItem(STORAGE.POINTS, String(p)); updatePointsUI(); }
+function updatePointsUI(){ $('#pointsPill').innerText = 'Pts ' + loadPoints(); }
+updatePointsUI();
+
+/* gamification */
+function loadGamer(){ return JSON.parse(localStorage.getItem(STORAGE.GAMER) || '{}'); }
+function saveGamer(s){ localStorage.setItem(STORAGE.GAMER, JSON.stringify(s)); }
+
+function ensureGamer(){
+  const s = loadGamer();
+  s.xp = s.xp || 0;
+  s.level = s.level || 1;
+  s.streak = s.streak || 0;
+  s.treinos = s.treinos || 0;
+  s.bike = s.bike || 0;
+  s.best = s.best || 0;
+  s.badges = s.badges || [];
+  saveGamer(s);
+  return s;
+}
+function xpForLevel(l){ return 50 + (l-1)*100; }
+
+function render(){
+  const s = ensureGamer();
+  const need = xpForLevel(s.level);
+  const pct = Math.min(100, Math.round((s.xp/need)*100));
+  $('#levelCircle').innerText = s.level;
+  $('#levelTitle').innerText = s.level===1 ? 'Iniciante' : `Nível ${s.level}`;
+  $('#xpText').innerText = `XP ${s.xp} / ${need}`;
+  $('#xpFill').style.width = pct + '%';
+  $('#streakVal').innerText = s.streak;
+  $('#statTreinos').innerText = s.treinos;
+  $('#statBike').innerText = s.bike + 'm';
+  $('#statBest').innerText = s.best;
+  const bw = $('#badgesWrap'); bw.innerHTML = '';
+  s.badges.forEach(b=>{
+    const el = document.createElement('div'); el.className = 'badge'; el.innerHTML = `<div style="font-weight:900">${b.emoji||'🏅'}</div><div style="font-size:13px">${b.name}</div>`;
+    bw.appendChild(el);
+  });
+}
+
+/* award XP and maybe level up */
+function addXP(amount){
+  const s = ensureGamer();
+  s.xp += amount;
+  while(s.xp >= xpForLevel(s.level)){
+    s.xp -= xpForLevel(s.level);
+    s.level++;
+    s.badges.push({name:`Level ${s.level}`, emoji:'⚔️'});
+  }
+  saveGamer(s);
+  render();
+}
+
+/* claim weekly bonus */
+$('#claimWeek').addEventListener('click', ()=> { addXP(40); showToast('Bônus semanal: +40 XP'); });
+$('#claimWeekTop').addEventListener('click', ()=> { addXP(40); showToast('Bônus semanal: +40 XP'); });
+
+/* small toast util */
+function showToast(msg){
+  const n = document.createElement('div'); n.style.position='fixed'; n.style.left='50%'; n.style.transform='translateX(-50%)'; n.style.bottom='20px'; n.style.padding='10px 14px'; n.style.background='#111'; n.style.color='#fff'; n.style.borderRadius='8px'; n.style.zIndex=1400; n.innerText=msg; document.body.appendChild(n);
+  setTimeout(()=> n.style.opacity = 0, 1200); setTimeout(()=> n.remove(), 1600);
+}
+
+/* sync quick stats from home storage */
+(function syncFromHome(){
+  const history = JSON.parse(localStorage.getItem(STORAGE.HISTORY) || '[]');
+  const s = ensureGamer();
+  s.treinos = history.length;
+  s.bike = Number(localStorage.getItem('bike_minutes') || 0);
+  s.best = s.best || Number(localStorage.getItem('best_streak') || 0);
+  // also keep points aligned
+  savePoints(Number(localStorage.getItem(STORAGE.POINTS) || 0));
+  saveGamer(s);
+})();
+
+/* link to profile */
+$('#toProfile').addEventListener('click', ()=> location.href='perfil.html');
+
+/* initial render */
+render();
+</script>
+</body>
+</html>
