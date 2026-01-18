@@ -1,1 +1,46 @@
+📋 Documentação do Projeto (v0.0.0.1)
+1. Visão Geral
+O sistema é um Web App focado em musculação e calistenia, projetado para funcionar inteiramente no navegador (Client-side). Ele utiliza uma arquitetura de múltiplas páginas (MPA) que compartilha dados através do motor de armazenamento local do navegador.
 
+Arquivo,Função,Responsabilidade Principal
+index.html,Dashboard,"Visão geral da semana, histórico rápido e acesso aos dias."
+train.html,Motor de Treino,"Execução de exercícios, timer de aeróbico e lógica de conclusão."
+progresso.html,Gamificação,"Cálculo de XP, níveis e visualização de Badges (conquistas)."
+perfil.html,Identidade,"Personalização de usuário, foto de perfil e gestão de dados (Reset)."
+
+3. Modelo de Dados (LocalStorage)
+O projeto utiliza um "banco de dados" local baseado em chaves. As principais são:
+
+history_v2: Array de objetos {day, date} registrando cada treino finalizado.
+points_v2: Valor numérico acumulado (Moeda do app).
+gamer_v1: Objeto complexo contendo xp, level, streak e badges.
+exercise_done_v3: Estado binário de cada exercício individual para evitar perda de progresso se a página atualizar.
+profile_v1: Dados do usuário (nome e imagem em Base64).
+
+4. Fluxo de Funcionamento
+
+O ciclo de vida de um treino no app segue este fluxo:
+Seleção: O usuário escolhe um dia no index.html.
+Preparação: O train.html lê o parâmetro via URL (?day=...) e monta a lista de exercícios.
+
+Execução:
+O Timer de Bike atualiza o estado em tempo real.
+Cada exercício marcado gera um feedback sonoro via Web Audio API.
+Finalização: Ao clicar em "Concluir", o app dispara três ações:
+Soma +15 pontos (Points).
+Adiciona a data ao histórico.
+Redireciona para a Home, que por sua vez atualiza a barra de progresso semanal.
+
+5. Tecnologias Utilizadas
+
+HTML5 Semântico: Uso de tags como main, nav e header.
+CSS3 (Modern UI): Variáveis CSS (:root), Flexbox, Grid e suporte nativo a Dark Mode via classes.
+Vanilla JavaScript: Manipulação de DOM pura, sem frameworks externos (foco em performance).
+Web Audio API: Geração de bips de sucesso via código.
+Base64 Image Handling: Processamento de imagens de perfil localmente.
+
+6. Próximos Passos (Roadmap Sugerido)
+Para a versão 0.0.0.2, os pontos de melhoria seriam:
+Refatoração do CSS: Corrigir as unidades faltantes (px) e centralizar as variáveis de cores em um único lugar.
+Sistema de Streak: Implementar a lógica que verifica se o treino de ontem foi feito para manter a "chama" acesa.
+Service Worker: Adicionar suporte offline para que o app abra em locais sem internet (como academias de subsolo).
